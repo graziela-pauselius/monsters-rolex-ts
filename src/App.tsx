@@ -1,26 +1,59 @@
-import React from 'react';
-import logo from './logo.svg';
-import './App.css';
+import { useState, useEffect, ChangeEvent } from "react";
+import CardList from "./components/card-list/card-list-component";
+import SearchBox from "./components/search-box/seach-box.component";
 
-function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
-}
+import { getData } from "./utils/data.utils";
+import "./App.css";
+
+export type Monster = {
+	id: string;
+	name: string;
+	email: string;
+};
+
+const App = () => {
+	//initialize the state
+	const [searchField, setSearchField] = useState(""); // [value, setValue]
+	const [monsters, setMonsters] = useState<Monster[]>([]); //empty array
+	const [filteredMonsters, setFilterMonsters] = useState(monsters);
+
+	useEffect(() => {
+		const fetchUsers = async () => {
+			const users = await getData<Array<Monster>>(
+				"https://jsonplaceholder.typicode.com/users"
+			);
+
+			setMonsters(users);
+		};
+
+		fetchUsers();
+	}, []);
+
+	//Use effect to isolate filterdMonster to fire only at monsters/searchFild changes
+	useEffect(() => {
+		const newFilteredMonsters = monsters.filter((monster) => {
+			return monster.name.toLocaleLowerCase().includes(searchField);
+		});
+
+		setFilterMonsters(newFilteredMonsters);
+	}, [monsters, searchField]);
+
+	const onSearchChange = (e: ChangeEvent<HTMLInputElement>): void => {
+		const searchFieldString = e.target.value.toLocaleLowerCase();
+		setSearchField(searchFieldString);
+	};
+
+	return (
+		<div className="App">
+			<h1 className="app-title">Monsters Rolodex</h1>
+			<SearchBox
+				onChangeHandler={onSearchChange}
+				placeholder="search monsters"
+				className="monsters-search-box"
+			/>
+			<CardList monsters={filteredMonsters} />
+		</div>
+	);
+};
 
 export default App;
